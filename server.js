@@ -2,7 +2,7 @@ const app = require("./app.js");
 const mongoose = require("mongoose");
 require("dotenv").config();
 mongoose
-  .connect(process.env.MOnGO_URL)
+  .connect(process.env.MONGO_URL)
   .then(() => {
     console.log("👍🏾veritabanina baglandi");
   })
