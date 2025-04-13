@@ -3,8 +3,26 @@ const Tour = require("../models/tourModel.js");
 
 exports.getAllTours = async (req, res) => {
   try {
-    const tours = await Tour.find();
-    res.json({ message: "getAllTours başarili", tours });
+    const tourQuery = Tour.find(req.formattedQery);
+    if (req.query.sort) {
+      tourQuery.sort(req.query.sort.split(",").join(""));
+    } else {
+      tourQuery.sort("-createdAt");
+    }
+
+    if (req.query.fields) {
+      tourQuery.select(req.query.fields.replaceAll(",", ""));
+    }
+
+    tourQuery.skip(9).limit(3);
+
+    const tours = await tourQuery;
+    res.json({
+      message: "getAllTours başarili",
+      message: "getAllTours basarili",
+      results: tours.length,
+      tours,
+    });
   } catch (error) {
     res.staus(404).json({ text: "getAllTours Başarisiz!!!" });
   }

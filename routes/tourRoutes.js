@@ -6,9 +6,10 @@ const {
   getTour,
   deleteTour,
 } = require("../controllers/tourController");
+const formatQuery = require("../middleware/formatQuery");
 const router = express.Router();
 
-router.route("/").get(getAllTours).post(createTour);
+router.route("/").get(formatQuery, getAllTours).post(createTour);
 
 router.route("/:id").get(getTour).delete(deleteTour).patch(updateTour);
 
