@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const validator = require("validator");
+
 const tourSchema = new mongoose.Schema(
   {
     name: {
@@ -19,6 +19,8 @@ const tourSchema = new mongoose.Schema(
 
     priceDiscount: {
       type: Number,
+      // custom validator (kendi yazdığımız kontrol methdoları)
+      // doğrulama fonksiyonları false return ederse doğrulamadna geçmedi anlmaına gelir ve belge veritabanına kaydedilmez true return ederse doğrulamadan geçti anlamına gelir
       validate: {
         validator: function (value) {
           return value < this.price;
@@ -115,66 +117,6 @@ const tourSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
-
-//! Virtual Populate
-tourSchema.virtual("reviews", {
-  ref: "Review",
-  localField: "_id",
-  foreignField: "tour",
-});
-
-//! Virtual Property
-tourSchema.virtual("discountedPrice").get(function () {
-  return this.price - this.priceDiscount;
-});
-
-tourSchema.virtual("slug").get(function () {
-  return this.name.replaceAll(" ", "-").toLowerCase();
-});
-
-//! Document Middleware
-tourSchema.pre("save", function (next) {
-  this.durationHour = this.duration * 24;
-
-  next();
-});
-
-//? pre() işlemden önce post() işlemden sonra middleware'i çalıştırmaya yarar
-tourSchema.post("updateOne", function (doc, next) {
-  console.log(doc._id, "şifreniz güncellendi maili gönderildi...");
-
-  next();
-});
-
-//! Query Middleware
-tourSchema.pre("find", function (next) {
-  this.find({ premium: { $ne: true } });
-
-  next();
-});
-
-//? Turlar veritbanında alınmaya çalışıldığında
-tourSchema.pre(/^find/, function (next) {
-  this.populate({
-    path: "guides",
-    select: "-password -__v -passResetToken -passResetExpires -passChangedAt",
-  });
-
-  next();
-});
-
-//! Aggregate Middleware
-
-tourSchema.pre("aggregate", function (next) {
-  this.pipeline().push({ $match: { premium: { $ne: true } } });
-
-  next();
-});
-
-//! Index
-tourSchema.index({ price: 1, ratingsAverage: -1 });
-
-tourSchema.index({ startLocation: "2dsphere" });
 
 const Tour = mongoose.model("Tour", tourSchema);
 
