@@ -1,123 +1,63 @@
-const mongoose = require("mongoose");
+const { Schema, default: mongoose } = require("mongoose");
+const validator = require("validator");
+const bcrypt = require("bcrypt");
 
-const tourSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      unique: [true, "Bu tur ismi zaten mevcut"],
-      required: [true, "Tur isim değerine sahip olmalı"],
-      // validate: [
-      //   validator.isAlphanumeric, // third party validator
-      //   "Tur ismi özel karakter içermemeli",
-      // ],
-    },
-
-    price: {
-      type: Number,
-      required: [true, "Tur fiyat değerine sahip olmalı"],
-    },
-
-    priceDiscount: {
-      type: Number,
-      // custom validator (kendi yazdığımız kontrol methdoları)
-      // doğrulama fonksiyonları false return ederse doğrulamadna geçmedi anlmaına gelir ve belge veritabanına kaydedilmez true return ederse doğrulamadan geçti anlamına gelir
-      validate: {
-        validator: function (value) {
-          return value < this.price;
-        },
-        message: "İndirim fiyatı asıl fiyattan büyük olamaz",
-      },
-    },
-
-    duration: {
-      type: Number,
-      required: [true, "Tur süre değerine sahip olmalı"],
-    },
-
-    difficulty: {
-      type: String,
-      required: [true, "Tur zorluk değerine sahip olmalı"],
-      enum: ["easy", "medium", "hard", "difficult"],
-    },
-
-    maxGroupSize: {
-      type: Number,
-      required: [true, "Tur maksimum kişi sayısı değerine sahip olmalı"],
-    },
-
-    ratingsAverage: {
-      type: Number,
-      min: [1, "Rating değeri 1'den küçük olamaz"],
-      max: [5, "Rating değeri 5'den büyük olamaz"],
-      default: 4.0,
-    },
-
-    ratingsQuantity: {
-      type: Number,
-      default: 0,
-    },
-
-    summary: {
-      type: String,
-      maxLength: [200, "Özet alanı 200 karakteri geçemez"],
-      required: [true, "Tur özet değerine sahip olmalı"],
-    },
-
-    description: {
-      type: String,
-      maxLength: [1000, "Açıklama alanı 1000 karakteri geçemez"],
-      required: [true, "Tur açıklama değerine sahip olmalı"],
-    },
-
-    imageCover: {
-      type: String,
-      required: [true, "Tur kağak fotğrafına sahip olmalı"],
-    },
-
-    images: {
-      type: [String],
-    },
-
-    startDates: {
-      type: [Date],
-    },
-
-    durationHour: { type: Number },
-
-    // embedding
-    startLocation: {
-      description: String,
-      type: { type: String, default: "Point", enum: "Point" },
-      coordinates: [Number],
-      address: String,
-    },
-
-    // embedding
-    locations: [
-      {
-        description: String,
-        type: { type: String, default: "Point", enum: "Point" },
-        coordinates: [Number],
-        day: Number,
-      },
-    ],
-
-    // refferance
-    guides: [
-      {
-        type: mongoose.Schema.ObjectId, // referans tanımında tip her zaman Object Id'di
-        ref: "User", // id'lerin hangi kolleksiyona ait olduğunu söyledik
-      },
-    ],
+const userSchema = new Schema({
+  name: {
+    type: String,
+    require: [true, "Kullanici isim degerini sahip olmali"],
+    minLenght: [3, "Kullanici ismi en az3 karakter olmali"],
+    maxLenght: [20, "Kullanici ismi en fazla 20 karakter olmali"],
   },
-  // şema ayarları
-  {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
-  }
-);
 
-const Tour = mongoose.model("Tour", tourSchema);
+  email: {
+    type: String,
+    require: [true, "Kullanici isim degerini sahip olmali"],
+    unique: [true, "Bu eposta adresine kayitli kullanici zaten var"],
+    validate: [validator.isEmail, "Lütfen geçerli bir mail giriniz"],
+  },
 
-module.exports = Tour;
+  photo: {
+    type: String,
+    default: "defaultpic.webp",
+  },
+
+  password: {
+    type: String,
+    required: [true, "Kullanıcı şifreye sahip olmalıdır"],
+    minLength: [8, "Şifre en az 8 karakter olmalı"],
+    validate: [validator.isStrongPassword, "Şifreniz yeterince güçlü değil"],
+  },
+
+  passwordConfirm: {
+    type: String,
+    required: [true, "Lütfen şifrenizi onaylayın"],
+    validate: {
+      validator: function (value) {
+        return value === this.password;
+      },
+      message: "Onay şifreniz eşleşmiyor",
+    },
+  },
+
+  role: {
+    type: String,
+    enum: ["user", "guide", "lead-guide", "admin"],
+    default: "user",
+  },
+
+  active: {
+    type: Boolean,
+    default: true,
+  },
+});
+
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, 12);
+  this.passwordConfirm = undefined;
+  next();
+});
+
+const User = mongoose.model("User", userSchema);
+module.exports = User;

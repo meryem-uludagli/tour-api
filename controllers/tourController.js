@@ -85,7 +85,7 @@ exports.getTourStats = async (req, res) => {
   }
 };
 
-exports.getMonthlyPlan = c(async (req, res, next) => {
+exports.getMonthlyPlan = async (req, res, next) => {
   const year = Number(req.params.year);
 
   const stats = await Tour.aggregate([
@@ -140,4 +140,4 @@ exports.getMonthlyPlan = c(async (req, res, next) => {
     message: `${year} yılı için aylık plan oluşturuldu`,
     stats,
   });
-});
+};
