@@ -50,6 +50,7 @@ const userSchema = new Schema({
     type: Boolean,
     default: true,
   },
+  passChangedAt: Date,
 });
 
 userSchema.pre("save", async function (next) {
@@ -58,6 +59,8 @@ userSchema.pre("save", async function (next) {
   this.passwordConfirm = undefined;
   next();
 });
-
+userSchema.methods.correctPass = async function (pass, hashedPass) {
+  return await bcrypt.compare(pass, hashedPass);
+};
 const User = mongoose.model("User", userSchema);
 module.exports = User;
