@@ -2,31 +2,35 @@ const express = require("express");
 const {
   getAllTours,
   createTour,
-  updateTour,
   getTour,
+  updateTour,
   deleteTour,
   aliasTopTours,
   getTourStats,
   getMonthlyPlan,
-} = require("../controllers/tourController");
+} = require("../controllers/tourController.js");
+const formattedQuery = require("../middleware/formatQuery.js");
+const { protect, restrictTo } = require("../controllers/authController.js");
 
-const formatQuery = require("../middleware/formatQuery");
-const { protect } = require("../controllers/authController");
 const router = express.Router();
 
 router.route("/top-tours").get(aliasTopTours, getAllTours);
 
-router.route("/tour-stats").get(protect, getTourStats);
-router.route("/monthly-plan").get(protect, getMonthlyPlan);
+router.route("/tour-stats").get(protect, restrictTo("admin"), getTourStats);
+
+router
+  .route("/monthly-plan/:year")
+  .get(protect, restrictTo("admin"), getMonthlyPlan);
+
 router
   .route("/")
-  .get(protect, formatQuery, getAllTours)
+  .get(formattedQuery, restrictTo("lead-guide", "admin"), getAllTours)
   .post(protect, createTour);
 
 router
   .route("/:id")
   .get(getTour)
-  .delete(protect, deleteTour)
-  .patch(protect, updateTour);
+  .delete(protect, restrictTo("lead-guide", "admin"), deleteTour)
+  .patch(protect, restrictTo("guide", "lead-guide", "admin"), updateTour);
 
 module.exports = router;
