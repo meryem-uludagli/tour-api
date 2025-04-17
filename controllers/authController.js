@@ -136,7 +136,7 @@ exports.restrictTo =
   (...roles) =>
   (req, res, next) => {
     if (!roles.includes(req.user.role)) {
-      return res.status(404).json({ message: "Bu işlem için yetkiniz yok" });
+      next(e(403, "Bu işlem için yetkiniz yok"));
     }
     next();
   };
