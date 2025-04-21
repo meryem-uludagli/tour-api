@@ -2,18 +2,22 @@ const express = require("express");
 const {
   getAllTours,
   createTour,
-  getTour,
   updateTour,
   deleteTour,
+  getTour,
   aliasTopTours,
   getTourStats,
   getMonthlyPlan,
-} = require("../controllers/tourController.js");
-const formattedQuery = require("../middleware/formatQuery.js");
-const { protect, restrictTo } = require("../controllers/authController.js");
+  getToursWithin,
+  getDistances,
+} = require("../controllers/tourController");
+const { protect, restrictTo } = require("../controllers/authController");
+const formatQuery = require("../middleware/formatQuery");
+const reviewController = require("../controllers/reviewController");
 
 const router = express.Router();
 
+// ---- routes -----
 router.route("/top-tours").get(aliasTopTours, getAllTours);
 
 router.route("/tour-stats").get(protect, restrictTo("admin"), getTourStats);
@@ -24,13 +28,30 @@ router
 
 router
   .route("/")
-  .get(formattedQuery, restrictTo("lead-guide", "admin"), getAllTours)
-  .post(protect, createTour);
+  .get(formatQuery, getAllTours)
+  .post(protect, restrictTo("lead-guide", "admin"), createTour);
 
 router
   .route("/:id")
   .get(getTour)
   .delete(protect, restrictTo("lead-guide", "admin"), deleteTour)
   .patch(protect, restrictTo("guide", "lead-guide", "admin"), updateTour);
+
+// Nested Routes
+// POST /api/tours/123456/reviews > tura yeni bir torum ekle
+// GET /api/tours/123456/reviews > tura ait olan bütün yorumları al
+// GET /api/tours/123456/reviews/5679856754 > tura ait olan yorumların arasından belirli id'deki yorumu al
+router
+  .route("/:tourId/reviews")
+  .get(reviewController.getAllReviews)
+  .post(protect, reviewController.setRefIds, reviewController.createReview);
+
+// coğrafi filtreleme
+router
+  .route("/tours-within/:distance/center/:latlng/unit/:unit")
+  .get(getToursWithin);
+
+// uzaklık hesaplama
+router.route("/distances/:latlng/unit/:unit").get(getDistances);
 
 module.exports = router;

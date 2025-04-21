@@ -4,9 +4,26 @@ const userRouter = require("./routes/userRoutes.js");
 const reviewRouter = require("./routes/reviewRoutes.js");
 const cookieParser = require("cookie-parser");
 const error = require("./utils/error.js");
+const rateLimit = require("express-rate-limit");
+const helmet = require("helmet");
+const sanitize = require("express-mongo-sanitize");
+const hpp = require("hpp");
 
 const app = express();
-app.use(express.json());
+
+rateLimit({
+  max: 100,
+  windowMs: 15 * 60 * 1000,
+  message:
+    "Kisa sure icinde cok fazla istekte bulundunuz.Daha sonra tekrar deneyin.",
+});
+
+app.use(helmet());
+app.use("/api", limiter);
+app.use(express.json({ limit: "10kb" }));
+app.use(sanitize());
+
+app.use(hpp());
 app.use(cookieParser());
 
 app.use("/api/tours", tourRouter);
