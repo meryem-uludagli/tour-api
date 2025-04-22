@@ -4,9 +4,6 @@ const User = require("../models/userModel.js");
 const fs = require("fs");
 const Review = require("../models/reviewModel.js");
 
-// Geliştirme aşamasında mongodbdeki verilerin sıkça değişceğinden veya bozulacğaından veritabanındaki verileri temizlmeye ve json dosyasındaki verileri veritabanına aktarmaya yarayan ve terminalden komutlarla çalışacak 2 fonksiyon yazalım
-
-// .env dosyasında değşikenlere erişim sağlar
 require("dotenv").config();
 
 //  mongodb veritabanına bağlan (local) (atlas)
